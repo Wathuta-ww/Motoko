@@ -1,0 +1,80 @@
+// imports
+
+import List "mo:base/List";
+import Option "mo:base/Option";
+import Trie "mo:base/Trie";
+import Nat32 "mo:base/Nat32";
+
+// smart contracts
+
+actor Superheroes {
+
+// type language 
+
+public type SuperheroID = Nat32;
+
+public type Superhero = {
+  name: Text;
+  superpowers: List.List<Text>;
+};
+
+// variables
+
+//let = immutable
+// var = mutable
+
+private stable var next: SuperheroID = 0;
+
+private stable var superheroes: Trie.Trie<SuperheroID, Superhero> = Trie.empty();
+
+public func create(superhero: Superhero) : async SuperheroID {
+  let superheroID = next;
+  next += 1;
+  superheroes := Trie.replace(
+    superheroes, 
+    key(superheroID),
+    Nat32.equal,
+    ?superhero,
+  ).0;
+  superheroID // return superheroID;
+};
+
+public query func read(superheroID:SuperheroID) : async ?Superhero {
+  let result = Trie.find(superheroes, key(superheroID), Nat32.equal);
+  result
+};
+
+public func update(superheroID:SuperheroID, superhero:Superhero) : async Bool {
+  let result = Trie.find(superheroes, key(superheroID), Nat32.equal);
+  let exists = Option.isSome(result);
+  if (exists) {
+    superheroes := Trie.replace (
+      superheroes, 
+      key(superheroID),
+      Nat32.equal,
+      ?superhero,
+    ).0;
+  };
+  exists
+};
+
+public func delete(superheroID: SuperheroID) : async Bool {
+  let result = Trie.find(superheroes, key(superheroID), Nat32.equal);
+  let exists = Option.isSome(result);
+  if (exists) {
+    superheroes := Trie.replace (
+      superheroes, 
+      key(superheroID),
+      Nat32.equal,
+      null,
+    ).0;
+  };
+  exists
+};
+
+private func key(x: SuperheroID) : Trie.Key<SuperheroID> {
+  return {hash=x; key = x};
+};
+
+
+}
